@@ -8,12 +8,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection
-mongoose.connect("mongodb://rajeshwari_db_user:Raju123@ac-pxaqvmf-shard-00-00.i2ra7dq.mongodb.net:27017,ac-pxaqvmf-shard-00-01.i2ra7dq.mongodb.net:27017,ac-pxaqvmf-shard-00-02.i2ra7dq.mongodb.net:27017/?ssl=true&replicaSet=atlas-zww569-shard-0&authSource=admin&appName=Cluster0")
+/* ===============================
+   🔗 MongoDB Connection
+   =============================== */
+
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
 .then(() => console.log("✅ MongoDB Connected"))
 .catch(err => console.log("❌ MongoDB Error:", err));
 
-// Schema
+/* ===============================
+   📄 Schema & Model
+   =============================== */
+
 const feedbackSchema = new mongoose.Schema({
   name: String,
   email: String,
@@ -22,25 +31,42 @@ const feedbackSchema = new mongoose.Schema({
 
 const Feedback = mongoose.model("Feedback", feedbackSchema);
 
+/* ===============================
+   📩 Routes
+   =============================== */
+
 // Save Feedback
 app.post("/feedback", async (req, res) => {
   try {
-    const newFeedback = new Feedback(req.body);
+    const { name, email, message } = req.body;
+
+    const newFeedback = new Feedback({
+      name,
+      email,
+      message
+    });
+
     await newFeedback.save();
 
-    res.json({ success: true });
+    res.json({ success: true, message: "Feedback saved!" });
+
   } catch (err) {
-    res.status(500).json({ error: "Failed to save" });
+    console.error(err);
+    res.status(500).json({ success: false, message: "Error saving feedback" });
   }
 });
 
-// Test
+// Test route
 app.get("/", (req, res) => {
   res.send("Backend running with MongoDB 🚀");
 });
 
-// Server
-const PORT = 5000;
+/* ===============================
+   🚀 Server Start
+   =============================== */
+
+const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(Server running on port ${PORT});
 });
